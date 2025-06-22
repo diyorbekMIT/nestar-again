@@ -7,13 +7,13 @@ export class Member {
     @Field(() => String)
     _id: ObjectId;
 
-    @Field(() => MemberType,)
-    memberType: MemberType
+    @Field(() => MemberType)
+    memberType: MemberType;
 
     @Field(() => MemberStatus)
     memberStatus: MemberStatus;
 
-    @Field(() => MemberAuthType,)
+    @Field(() => MemberAuthType)
     memberAuthType: MemberAuthType;
 
     @Field(() => String)
@@ -21,20 +21,19 @@ export class Member {
 
     @Field(() => String)
     memberNick: string;
-    
-    
+
     memberPassword?: string;
 
-    @Field(() => String, {nullable: true})
+    @Field(() => String, { nullable: true })
     memberFullName?: string;
 
     @Field(() => String)
     memberImage?: string;
 
-    @Field(() => String, {nullable: true})
+    @Field(() => String, { nullable: true })
     memberAddress?: string;
 
-    @Field(() => String, {nullable: true})
+    @Field(() => String, { nullable: true })
     memberDesc?: string;
 
     @Field(() => Int)
@@ -70,12 +69,16 @@ export class Member {
     @Field(() => Int)
     memberBlocks: number;
 
-    @Field(() => Date, {nullable: true})
-    deletedAt?: Date;  
+    @Field(() => Date, { nullable: true })
+    deletedAt?: Date;
 
     @Field(() => Date)
-    createdAt?: Date;  
+    createdAt?: Date;
 
     @Field(() => Date)
-    updatedAt?: Date;  
+    updatedAt?: Date;
+
+    // <<< Add this field with nullable true >>>
+    @Field(() => String, { nullable: true })
+    accessToken?: string;
 }
