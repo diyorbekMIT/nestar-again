@@ -10,6 +10,10 @@ import { AuthMember } from "../auth/decorators/authMember.decorator";
 import { Roles } from "../auth/decorators/roles.decorator";
 import { RolesGuard } from "../auth/guards/roles.guard";
 import { MemberType } from "../../libs/enums/member.enum";
+import { WithoutGuard } from "../auth/guards/without.guard";
+import { MemberUpdate } from "../../libs/dto/member/member.update";
+import { ObjectId } from "mongoose";
+import { shapeIntoMongoObjectId } from "../../libs/config";
 
 @Resolver()
 @UsePipes(ValidationPipe)
@@ -36,11 +40,16 @@ export class MemberResolver {
     }x
 
     @UseGuards(AuthGuard)
-    @Mutation(() => String)
-    public async updateMember(@AuthMember() authMember: Member): Promise<string> {
-        console.log("updateMember: signup");
-        return this.memberService.updateMember()
-    }
+	@Mutation(() => Member)
+	public async updateMember(
+		@Args('input') input: MemberUpdate,
+		@AuthMember('_id') memberId: ObjectId,
+	): Promise<Member> {
+		console.log('Mutation: updateMember');
+		// console.log('authMember:', authMember);
+		delete input._id;
+		return await this.memberService.updateMember(memberId, input);
+	}
 
     @UseGuards(AuthGuard)
     @Query(() => String)
@@ -57,10 +66,11 @@ export class MemberResolver {
         return `hello, ${authMember.memberNick}, you are ${authMember.memberType} (memberId: ${authMember._id})`
     }
 
-
-    @Query(() => String)
-    public async getMember(): Promise<string> {
-        console.log("getMember: signup");
-        return this.memberService.getMember()
+    @UseGuards(WithoutGuard)
+	@Query(() => Member)
+	public async getMember(@Args('memberId') input: string, @AuthMember('_id') memberId: ObjectId): Promise<Member> {
+		console.log('Query: getMember');
+		const targetId = shapeIntoMongoObjectId(input);
+		return await this.memberService.getMember(memberId, targetId);
     }
 }
