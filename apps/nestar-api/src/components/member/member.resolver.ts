@@ -3,7 +3,7 @@ import { AppService } from "../../app.service";
 import { Query, Mutation } from "@nestjs/graphql";
 import { MemberService } from "./member.service";
 import { InternalServerErrorException, UseGuards, UsePipes, ValidationPipe } from "@nestjs/common";
-import { AgentsInquiry, LoginInput, MemberInput } from "../../libs/dto/member/member.input";
+import { AgentsInquiry, LoginInput, MemberInput, MembersInquiry } from "../../libs/dto/member/member.input";
 import { Member, Members } from "../../libs/dto/member/member";
 import { AuthGuard } from "../auth/guards/auth.guard";
 import { AuthMember } from "../auth/decorators/authMember.decorator";
@@ -85,5 +85,21 @@ export class MemberResolver {
 		return await this.memberService.getAgents(memberId, input);
 	}
 
+
+    /**ADMIN */
+
+    @Roles(MemberType.ADMIN)
+    @UseGuards(RolesGuard)
+    @Query(()=> Members)
+    public async getMembersByAdmin(@Args("input") input: MembersInquiry): Promise<Members> {
+        return await this.memberService.getMembersByAdmin(input);
+    }
+
+    @Roles(MemberType.ADMIN)
+    @UseGuards(RolesGuard)
+    @Query(()=> Member)
+    public async updateMemberByAdmin(@Args("input")input: MemberUpdate): Promise<Member> {
+        return await this.memberService.updateMemberByAdmin(input);
+    }
 
 }
