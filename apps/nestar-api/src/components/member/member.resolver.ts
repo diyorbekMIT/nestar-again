@@ -3,8 +3,8 @@ import { AppService } from "../../app.service";
 import { Query, Mutation } from "@nestjs/graphql";
 import { MemberService } from "./member.service";
 import { InternalServerErrorException, UseGuards, UsePipes, ValidationPipe } from "@nestjs/common";
-import { LoginInput, MemberInput } from "../../libs/dto/member/member.input";
-import { Member } from "../../libs/dto/member/member";
+import { AgentsInquiry, LoginInput, MemberInput } from "../../libs/dto/member/member.input";
+import { Member, Members } from "../../libs/dto/member/member";
 import { AuthGuard } from "../auth/guards/auth.guard";
 import { AuthMember } from "../auth/decorators/authMember.decorator";
 import { Roles } from "../auth/decorators/roles.decorator";
@@ -25,7 +25,7 @@ export class MemberResolver {
         try {
             console.log("Mutation: signup");
             console.log("input", input);
-            return this.memberService.signup(input)
+            return await this.memberService.signup(input)
         } catch(err) {
            console.log("error on signup", err);
            throw new InternalServerErrorException(err)
@@ -36,7 +36,7 @@ export class MemberResolver {
     @Mutation(() => Member)
     public async login(@Args("input") input: LoginInput): Promise<Member> {
         console.log("login: signup");
-        return this.memberService.login(input)
+        return await this.memberService.login(input)
     }x
 
     @UseGuards(AuthGuard)
@@ -73,4 +73,17 @@ export class MemberResolver {
 		const targetId = shapeIntoMongoObjectId(input);
 		return await this.memberService.getMember(memberId, targetId);
     }
+
+    @UseGuards(WithoutGuard)
+	@Query(() => Members)
+	public async getAgents(
+		@Args('input') input: AgentsInquiry,
+		@AuthMember('_id')
+		memberId: ObjectId,
+	): Promise<Members> {
+		console.log('Query: getAgents');
+		return await this.memberService.getAgents(memberId, input);
+	}
+
+
 }
