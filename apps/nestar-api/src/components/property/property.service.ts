@@ -110,7 +110,7 @@ export class PropertyService {
 		return result[0];
 	}
 
-	private async propertyStatsEditor(input: StatisticModifier) :Promise<Property> {
+	public async propertyStatsEditor(input: StatisticModifier) :Promise<Property> {
 		const {_id, targetKey, modifier} = input;
 		return await this.propertyModel.findOneAndUpdate(_id,{$inc: {[targetKey]: modifier}},
 			{new: true},
