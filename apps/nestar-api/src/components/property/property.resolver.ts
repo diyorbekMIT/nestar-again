@@ -8,7 +8,7 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { AuthMember } from '../auth/decorators/authMember.decorator';
 import { ObjectId } from 'mongoose';
 import { Properties, Property } from '../../libs/dto/property/property';
-import { AgentPropertiesInquiry, PropertiesInquiry, PropertyInput } from '../../libs/dto/property/property.input';
+import { AgentPropertiesInquiry, AllPropertiesInquiry, PropertiesInquiry, PropertyInput } from '../../libs/dto/property/property.input';
 import { WithoutGuard } from '../auth/guards/without.guard';
 import { shapeIntoMongoObjectId } from '../../libs/config';
 import { PropertyUpdate } from '../../libs/dto/property/property.update';
@@ -69,10 +69,44 @@ export class PropertyResolver {
 		@AuthMember("_id") memberId: ObjectId
 	): Promise<Properties> {
 		console.log("Query: getAgentProperties:");
-		const result = this.propertyService.getAgentProperties(memberId, input);
+		const result = await this.propertyService.getAgentProperties(memberId, input);
 
 		return result;
 		
+	}
+
+	/** ADMIN */
+
+	@Roles(MemberType.ADMIN)
+	@UseGuards(RolesGuard)
+	@Query(() => Properties)
+	public async getAllPropertiesByAdmin(
+		@Args('input') input:AllPropertiesInquiry,
+		@AuthMember('_id') memberId: ObjectId,
+	): Promise<Properties> {
+		console.log("Query: GetAllPropertiesByADMIN");
+		const result = await this.propertyService.getAllPropertiesByAdmin(input);
+
+		return result;
+
+	}
+
+	@Roles(MemberType.ADMIN)
+	@UseGuards(RolesGuard)
+	@Mutation((returns) => Property)
+	public async updatePropertyByAdmin(@Args("input") input: PropertyUpdate): Promise<Property> {
+		console.log("Mutation: updatePropertyByAdmin");
+		input._id = shapeIntoMongoObjectId(input._id);
+		return await this.propertyService.updatePropertyByAdmin(input);
+	}
+
+	@Roles(MemberType.ADMIN)
+	@UseGuards(RolesGuard)
+	@Mutation((returns) => Property)
+	public async removePropertyByAdmin(@Args("propertyId") input: string): Promise<Property> {
+		console.log("Mutation: removePropertyByAdmin");
+		const propertyId = shapeIntoMongoObjectId(input);
+		return await this.propertyService.removePropertyByAdmin(propertyId);
 	}
 
 
