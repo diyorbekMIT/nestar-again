@@ -10,13 +10,17 @@ import { MemberUpdate } from '../../libs/dto/member/member.update';
 import { ViewService } from '../view/view.service';
 import { StatisticModifier, T } from '../../libs/types/common';
 import { ViewGroup } from '../../libs/enums/view.enum';
+import { LikeService } from '../like/like.service';
+import { LikeInput } from '../../libs/dto/like/like.input';
+import { LikeGroup } from '../../libs/enums/like.enum';
 
 @Injectable()
 export class MemberService {  
     constructor(
         @InjectModel("Member") private readonly memberModel: Model<Member>, 
         private readonly authService: AuthService,
-        private readonly viewService: ViewService
+        private readonly viewService: ViewService,
+        private readonly likeService: LikeService
     ) {}
 
     // ✅ SIGNUP
@@ -123,6 +127,16 @@ export class MemberService {
                 ).exec();
                 targetMember.memberViews++
             }
+
+
+            const likeInput = {
+                memberId: memberId,
+                likeRefId: targetId,
+                likeGroup: LikeGroup.MEMBER,
+            };
+            targetMember.meLiked = await this.likeService.checkLikeExistence(likeInput);
+
+            
         }
         return targetMember;
     }
@@ -155,6 +169,25 @@ export class MemberService {
 		if (!result.length) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
 		return result[0];
 	}
+
+
+    public async likeTargetMember(memberId: ObjectId, likeRefId: ObjectId): Promise<Member>{
+		const target: Member = await this.memberModel.findOne({ _id: likeRefId, memberStatus: MemberStatus.ACTIVE }).exec();
+		if (!target) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
+
+		const input: LikeInput = {
+			memberId: memberId,
+			likeRefId: likeRefId,
+			likeGroup: LikeGroup.MEMBER
+		};
+
+		//Like toggle
+		const modifier: number = await this.likeService.toggleLike(input);
+		const result = await this.memberStatsEditor({_id: likeRefId, targetKey: "memberLikes", modifier: modifier})
+		if (!result) throw new InternalServerErrorException(Message.SOMETHING_WENT_WRONG);
+		return result;
+	}
+
 
     //**ADMIN */
 

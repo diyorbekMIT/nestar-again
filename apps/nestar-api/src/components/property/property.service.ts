@@ -13,13 +13,17 @@ import { ViewService } from '../view/view.service';
 import { PropertyUpdate } from '../../libs/dto/property/property.update';
 import * as moment from "moment";
 import { lookupMember, shapeIntoMongoObjectId } from '../../libs/config';
+import { LikeGroup } from '../../libs/enums/like.enum';
+import { LikeService } from '../like/like.service';
 
 @Injectable()
 export class PropertyService {
 	constructor(
 		@InjectModel('Property') private readonly propertyModel: Model<Property>,
 		private memberService: MemberService,
-		private readonly viewService: ViewService
+		private readonly viewService: ViewService,
+		private readonly likeService: LikeService
+		
 	) {}
 
 	public async createProperty(input: PropertyInput): Promise<Property> {
@@ -50,6 +54,14 @@ export class PropertyService {
 			if (newView) {
 				await this.propertyStatsEditor({_id: propertyId, targetKey: 'propertyViews', modifier: 1})
 			}
+
+
+			const likeInput = {
+				memberId: memberId,
+				likeRefId: propertyId,
+				likeGroup: LikeGroup.PROPERTY
+			};
+			targetProperty.meLiked = await this.likeService.checkLikeExistence(likeInput);
 		}
 		targetProperty.memberData = await this.memberService.getMember(null, targetProperty.memberId);
 		return targetProperty;
@@ -116,7 +128,7 @@ export class PropertyService {
 			{new: true},
 		).exec()
 	}
-
+ 
 	private shapeMatchQuery(match: T, input: PropertiesInquiry): void {
 		const {
 			memberId,
