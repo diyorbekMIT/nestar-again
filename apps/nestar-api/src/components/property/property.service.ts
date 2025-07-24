@@ -5,7 +5,7 @@ import { Model, ObjectId } from 'mongoose';
 import { Direction, Message } from '../../libs/enums/common.enum';
 import { MemberService } from '../member/member.service';
 import { Properties, Property } from '../../libs/dto/property/property';
-import { AgentPropertiesInquiry, AllPropertiesInquiry, PropertiesInquiry, PropertyInput } from '../../libs/dto/property/property.input';
+import { AgentPropertiesInquiry, AllPropertiesInquiry, OrdinaryInquiry, PropertiesInquiry, PropertyInput } from '../../libs/dto/property/property.input';
 import { StatisticModifier, T } from '../../libs/types/common';
 import { PropertyStatus } from '../../libs/enums/property.enum';
 import { ViewGroup } from '../../libs/enums/view.enum';
@@ -43,25 +43,21 @@ export class PropertyService {
 	public async getProperty(memberId: ObjectId, propertyId: ObjectId): Promise<Property> {
 		const search: T = {
 			_id: propertyId,
-			propertyStatus: PropertyStatus.ACTIVE
-		}
-		 
-		const targetProperty = await this.propertyModel.findOne(search).lean().exec();
-		if(!targetProperty) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
+			propertyStatus: PropertyStatus.ACTIVE,
+		};
+
+		const targetProperty: Property = await this.propertyModel.findOne(search).lean().exec();
+		if (!targetProperty) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
 
 		if (memberId) {
 			const viewInput = { memberId: memberId, viewRefId: propertyId, viewGroup: ViewGroup.PROPERTY };
 			const newView = await this.viewService.recordView(viewInput);
 			if (newView) {
-				await this.propertyStatsEditor({_id: propertyId, targetKey: 'propertyViews', modifier: 1})
+				await this.propertyStatsEditor({ _id: propertyId, targetKey: 'propertyViews', modifier: 1 });
+				targetProperty.propertyViews++;
 			}
-
-
-			const likeInput = {
-				memberId: memberId,
-				likeRefId: propertyId,
-				likeGroup: LikeGroup.PROPERTY
-			};
+			//MeLiked
+			const likeInput = { memberId: memberId, likeRefId: propertyId, likeGroup: LikeGroup.PROPERTY };
 			targetProperty.meLiked = await this.likeService.checkLikeExistence(likeInput);
 		}
 		targetProperty.memberData = await this.memberService.getMember(null, targetProperty.memberId);
@@ -160,6 +156,14 @@ export class PropertyService {
 			return { [ele]: true };
 			});
 		}
+	}
+
+	public async getFavorites(memberId: ObjectId, input: OrdinaryInquiry): Promise<Properties> {
+		return await this.likeService.getFavoriteProperties(memberId, input);
+	}
+
+	public async getVisited(memberId: ObjectId, input: OrdinaryInquiry): Promise<Properties> {
+		return await this.viewService.getVisitedProperties(memberId, input);
 	}
 
 	public async getAgentProperties(memberId: ObjectId, input: AgentPropertiesInquiry): Promise<Properties> {
